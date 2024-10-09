@@ -1,11 +1,15 @@
 package black.bracken.kt2uml.kernel
 
+import black.bracken.kt2uml.kernel.transformer.Transformer
+import black.bracken.kt2uml.kernel.transformer.UmlTarget
+import black.bracken.kt2uml.kernel.transformer.Visibility
 import kotlinx.ast.common.AstSource
 import kotlinx.ast.common.klass.KlassDeclaration
 import kotlinx.ast.grammar.kotlin.common.KotlinGrammarParserType
 import kotlinx.ast.grammar.kotlin.common.summary
 import kotlinx.ast.grammar.kotlin.target.antlr.kotlin.KotlinGrammarAntlrKotlinParser
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -18,6 +22,28 @@ class TransformerTest {
       fun f(x: (a: A, b: B, C) -> Unit): X = TODO()
     """.trimIndent()
     println(parse(code))
+  }
+
+  @Test
+  fun testFunction_default() = runBlocking {
+    val actual = """
+      @Annotation
+      protected fun f(x: Int): String {}
+    """.transformCode { Transformer.generateUmlTarget(it) }
+
+    val expected = UmlTarget.Function(
+      name = "f",
+      annotationNames = listOf("Annotation"),
+      params = listOf("x"),
+      returnType = "String",
+      visibility = Visibility.PROTECTED
+    )
+
+    Assertions.assertEquals(listOf(expected), actual)
+  }
+
+  private inline fun <T> String.transformCode(transform: (String) -> T): T {
+    return transform(this.trimIndent())
   }
 
   private suspend fun parse(code: String): List<KlassDeclaration> {

@@ -27,7 +27,77 @@ import kotlin.coroutines.suspendCoroutine
 //  data class Function(val params: List<FunctionParameter>, val returned: Type) : Type
 //}
 
+sealed interface UmlTarget {
+
+  data class Function(
+    val name: String,
+    val annotationNames: List<String>,
+    val params: List<String>, // type
+    val returnType: String, // type
+    val visibility: Visibility,
+  ) : UmlTarget
+
+}
+
+enum class Visibility {
+  PRIVATE,
+  PROTECTED,
+  INTERNAL,
+  PUBLIC,
+  UNSPECIFIED, // NOTE: pluginなどでデフォルトの可視性をprivateにしている場合のサポート
+}
+
 data object Transformer {
+
+  suspend fun generateUmlTarget(code: String): List<UmlTarget>? {
+    return try {
+      val src = AstSource.String("description", code)
+      val rootAst = KotlinGrammarAntlrKotlinParser.parse(src, KotlinGrammarParserType.kotlinFile)
+
+      suspendCoroutine { cont ->
+        rootAst.summary(false)
+          .onSuccess { ast ->
+            cont.resume(generateUmlTargets(ast.filterIsInstance<KlassDeclaration>()))
+          }
+          .onFailure { cont.resume(null) }
+      }
+    } catch (_: Exception) {
+      null
+    }
+  }
+
+  private fun generateUmlTargets(klassDeclarations: List<KlassDeclaration>): List<UmlTarget> {
+    return klassDeclarations.mapNotNull { klassDeclaration ->
+      when (klassDeclaration.keyword) {
+        "fun" -> generateUmlTargetForFunction(klassDeclaration)
+        else -> null
+      }
+    }
+  }
+
+  private fun generateUmlTargetForFunction(klassDeclaration: KlassDeclaration): UmlTarget.Function? {
+    val name = klassDeclaration.identifier?.identifier ?: return null
+    val annotationNames = klassDeclaration.annotations.mapNotNull { it.identifier.firstOrNull()?.rawName }
+    val params = klassDeclaration.parameter.mapNotNull { it.identifier?.rawName }
+    val returnType = klassDeclaration.type.firstOrNull()?.rawName ?: "Unit"
+
+    val modifiers = klassDeclaration.modifiers.map { it.modifier }
+    val visibility = when {
+      "private" in modifiers -> Visibility.PRIVATE
+      "protected" in modifiers -> Visibility.PROTECTED
+      "internal" in modifiers -> Visibility.INTERNAL
+      "public" in modifiers -> Visibility.PUBLIC
+      else -> Visibility.UNSPECIFIED
+    }
+
+    return UmlTarget.Function(
+      name = name,
+      annotationNames = annotationNames,
+      params = params,
+      returnType = returnType,
+      visibility = visibility,
+    )
+  }
 
   suspend fun genUml(code: String): String {
     return try {
@@ -59,6 +129,7 @@ data object Transformer {
         val annotations = klassDeclaration.annotations
         val params = klassDeclaration.parameter
         val returnType = klassDeclaration.type.firstOrNull()?.rawName ?: "Unit"
+
         val modifiers = klassDeclaration.modifiers.map { it.modifier }
         val visibilitySymbol = when {
           "private" in modifiers -> "-"
