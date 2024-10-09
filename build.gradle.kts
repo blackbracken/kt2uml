@@ -19,6 +19,7 @@ repositories {
 dependencies {
   implementation(compose.desktop.currentOs)
   implementation("com.github.kotlinx.ast:grammar-kotlin-parser-antlr-kotlin:0.1.0")
+  implementation("app.cash.molecule:molecule-runtime:2.0.0")
 
   val junitVersion = "5.8.1"
   testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
