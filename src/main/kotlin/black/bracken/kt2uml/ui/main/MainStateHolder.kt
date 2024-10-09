@@ -38,7 +38,7 @@ class MainStateHolder(coroutineScope: CoroutineScope) {
       generateState = GenerateState.Generating
 
       val printed = Transformer.transformUmlTarget(code)
-        ?.joinToString("\n") {
+        ?.joinToString("\n\n") {
           when (it) {
             is UmlTarget.Function -> PlantUmlPrinter.printFunction(it)
           }
