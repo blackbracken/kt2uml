@@ -74,7 +74,7 @@ class TransformerTest {
   }
 
   private suspend fun String.transformCode(): List<UmlTarget>? {
-    return Transformer.generateUmlTarget(this.trimIndent())
+    return Transformer.transformUmlTarget(this.trimIndent())
   }
 
 }
