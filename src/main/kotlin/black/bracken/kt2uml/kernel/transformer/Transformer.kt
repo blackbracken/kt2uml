@@ -1,5 +1,6 @@
 package black.bracken.kt2uml.kernel.transformer
 
+import black.bracken.kt2uml.util.Kt2umlLogger.withWarn
 import kotlinx.ast.common.AstSource
 import kotlinx.ast.common.ast.DefaultAstNode
 import kotlinx.ast.common.ast.DefaultAstTerminal
@@ -76,7 +77,7 @@ data object Transformer {
   }
 
   private fun generateUmlTargetForFunction(klassDeclaration: KlassDeclaration): UmlTarget.Function? {
-    val name = klassDeclaration.identifier?.identifier ?: return null
+    val name = klassDeclaration.identifier?.identifier ?: return null.withWarn("name is null: ${klassDeclaration.identifier}")
     val annotationNames = klassDeclaration.annotations.mapNotNull { it.identifier.firstOrNull()?.rawName }
     val params = klassDeclaration.parameter.mapNotNull { it.identifier?.rawName }
     val returnType = klassDeclaration.type.firstOrNull()?.rawName ?: "Unit"
