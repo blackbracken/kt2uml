@@ -1,10 +1,6 @@
 package black.bracken.kt2uml.kernel
 
-import black.bracken.kt2uml.kernel.transformer.FunctionParameter
 import black.bracken.kt2uml.kernel.transformer.Transformer
-import black.bracken.kt2uml.kernel.transformer.Type
-import black.bracken.kt2uml.kernel.transformer.UmlTarget
-import black.bracken.kt2uml.kernel.transformer.Visibility
 import kotlinx.ast.common.AstSource
 import kotlinx.ast.common.klass.KlassDeclaration
 import kotlinx.ast.grammar.kotlin.common.KotlinGrammarParserType
