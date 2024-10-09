@@ -21,6 +21,10 @@ enum class Visibility {
 }
 
 sealed interface FunctionParameter {
+  data class JustType(
+    override val type: Type,
+  ) : FunctionParameter
+
   data class TypeAndName(
     override val type: Type,
     val name: String,
@@ -31,6 +35,7 @@ sealed interface FunctionParameter {
 
 sealed interface Type {
   data class Reference(val typeName: String) : Type
+  data class Function(val params: List<FunctionParameter>, val returnType: Type) : Type
 
   companion object {
     val UNIT = Reference(typeName = "Unit")

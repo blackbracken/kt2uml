@@ -83,14 +83,64 @@ data object Transformer {
   }
 
   private fun transformType(typeAst: DefaultAstNode): Type? {
-    // TODO: function type
-    return typeAst
-      .findChild("typeReference")
-      ?.findChild("userType")
-      ?.findChild("simpleUserType")
-      ?.findChild("simpleIdentifier")
-      ?.findTerminal("Identifier")
-      ?.let { Type.Reference(it.text) }
+    return when {
+      // 参照型
+      typeAst.hasChild("typeReference") -> {
+        typeAst.findChild("typeReference")
+          ?.findChild("userType")
+          ?.findChild("simpleUserType")
+          ?.findChild("simpleIdentifier")
+          ?.findTerminal("Identifier")
+          ?.let { Type.Reference(it.text) }
+      }
+
+      // 関数型
+      typeAst.hasChild("functionType") -> {
+        val functionTypeAst = typeAst.findChild("functionType") ?: return null
+        val functionTypeParametersAst = functionTypeAst.findChild("functionTypeParameters") ?: return null
+
+        val returnType = functionTypeAst.findChild("type")?.let { transformType(it) } ?: return null
+
+        val params = functionTypeParametersAst.findChildren("type", "parameter")
+          .mapNotNull { ast ->
+            when (ast.description) {
+              // 引数が無名のとき
+              "type" -> {
+                val type = transformType(ast) ?: return@mapNotNull null
+
+                FunctionParameter.JustType(
+                  type = type,
+                )
+              }
+
+              // 引数に名前が付けられているとき
+              "parameter" -> {
+                val paramName = ast.findChild("simpleIdentifier")
+                  ?.findTerminal("Identifier")
+                  ?.text
+                  ?: return@mapNotNull null
+                val type = ast.findChild("type")
+                  ?.let { transformType(it) }
+                  ?: return@mapNotNull null
+
+                FunctionParameter.TypeAndName(
+                  type = type,
+                  name = paramName,
+                )
+              }
+
+              else -> return@mapNotNull null.withWarn("function type parameter could not be interpretted")
+            }
+          }
+
+        Type.Function(
+          params = params,
+          returnType = returnType,
+        )
+      }
+
+      else -> null
+    }
   }
 
   private fun KlassDeclaration.asDefaultAstNode(): DefaultAstNode? = rawAstOrNull()?.ast as? DefaultAstNode
@@ -220,6 +270,10 @@ data object Transformer {
 
   private fun DefaultAstNode.findChild(description: String): DefaultAstNode? {
     return children.find { it.description == description } as? DefaultAstNode
+  }
+
+  private fun DefaultAstNode.findChildren(vararg descriptions: String): List<DefaultAstNode> {
+    return children.filterIsInstance<DefaultAstNode>().filter { it.description in descriptions }
   }
 
   private fun DefaultAstNode.findTerminal(description: String): DefaultAstTerminal? {
