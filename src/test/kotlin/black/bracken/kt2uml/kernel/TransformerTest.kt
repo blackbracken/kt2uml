@@ -53,7 +53,7 @@ class TransformerTest {
           name = "x",
         )
       ),
-      returnType = "String",
+      returnType = Type.Reference("String"),
       visibility = Visibility.PROTECTED
     )
 

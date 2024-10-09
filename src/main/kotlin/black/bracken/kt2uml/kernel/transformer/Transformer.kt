@@ -34,7 +34,7 @@ sealed interface UmlTarget {
     val name: String,
     val annotationNames: List<String>,
     val params: List<FunctionParameter.TypeAndName>,
-    val returnType: String, // type
+    val returnType: Type,
     val visibility: Visibility,
   ) : UmlTarget
 
@@ -59,6 +59,10 @@ sealed interface FunctionParameter {
 
 sealed interface Type {
   data class Reference(val typeName: String) : Type
+
+  companion object {
+    val UNIT = Reference(typeName = "Unit")
+  }
 }
 
 data object Transformer {
@@ -106,7 +110,7 @@ data object Transformer {
         type = type,
       )
     }
-    val returnType = klassDeclaration.type.firstOrNull()?.rawName ?: "Unit"
+    val returnType = klassDeclaration.asDefaultAstNode()?.findChild("type")?.let { transformType(it) } ?: Type.UNIT
 
     val modifiers = klassDeclaration.modifiers.map { it.modifier }
     val visibility = when {
