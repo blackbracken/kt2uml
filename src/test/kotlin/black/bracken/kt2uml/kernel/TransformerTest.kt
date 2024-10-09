@@ -25,11 +25,22 @@ class TransformerTest {
   }
 
   @Test
+  fun testUnknown() = runBlocking {
+    val actual = """
+      UNKNOWN
+    """.transformCode()
+
+    val expected = null
+
+    Assertions.assertEquals(expected, actual)
+  }
+
+  @Test
   fun testFunction_default() = runBlocking {
     val actual = """
       @Annotation
       protected fun f(x: Int): String {}
-    """.transformCode { Transformer.generateUmlTarget(it) }
+    """.transformCode()
 
     val expected = UmlTarget.Function(
       name = "f",
@@ -42,8 +53,8 @@ class TransformerTest {
     Assertions.assertEquals(listOf(expected), actual)
   }
 
-  private inline fun <T> String.transformCode(transform: (String) -> T): T {
-    return transform(this.trimIndent())
+  private suspend fun String.transformCode(): List<UmlTarget>? {
+    return Transformer.generateUmlTarget(this.trimIndent())
   }
 
   private suspend fun parse(code: String): List<KlassDeclaration> {
