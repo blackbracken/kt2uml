@@ -55,10 +55,13 @@ internal fun MainScreen() {
     snackbarHost = {
       SnackbarHost(hostState = snackbarHostState)
     },
-    modifier = Modifier.fillMaxSize().padding(8.dp),
-  ) {
+    modifier = Modifier.fillMaxSize(),
+  ) { paddingValues ->
     Row(
-      modifier = Modifier.fillMaxHeight(),
+      modifier = Modifier
+        .padding(paddingValues)
+        .padding(8.dp)
+        .fillMaxHeight(),
     ) {
       OutlinedTextField(
         value = input,
