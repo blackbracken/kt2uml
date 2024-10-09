@@ -1,6 +1,8 @@
 package black.bracken.kt2uml.kernel
 
+import black.bracken.kt2uml.kernel.transformer.FunctionParameter
 import black.bracken.kt2uml.kernel.transformer.Transformer
+import black.bracken.kt2uml.kernel.transformer.Type
 import black.bracken.kt2uml.kernel.transformer.UmlTarget
 import black.bracken.kt2uml.kernel.transformer.Visibility
 import kotlinx.ast.common.AstSource
@@ -45,7 +47,12 @@ class TransformerTest {
     val expected = UmlTarget.Function(
       name = "f",
       annotationNames = listOf("Annotation"),
-      params = listOf("x"),
+      params = listOf(
+        FunctionParameter.TypeAndName(
+          type = Type.Reference(typeName = "Int"),
+          name = "x",
+        )
+      ),
       returnType = "String",
       visibility = Visibility.PROTECTED
     )

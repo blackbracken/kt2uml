@@ -33,7 +33,7 @@ sealed interface UmlTarget {
   data class Function(
     val name: String,
     val annotationNames: List<String>,
-    val params: List<String>, // type
+    val params: List<FunctionParameter.TypeAndName>,
     val returnType: String, // type
     val visibility: Visibility,
   ) : UmlTarget
@@ -46,6 +46,19 @@ enum class Visibility {
   INTERNAL,
   PUBLIC,
   UNSPECIFIED, // NOTE: pluginなどでデフォルトの可視性をprivateにしている場合のサポート
+}
+
+sealed interface FunctionParameter {
+  data class TypeAndName(
+    override val type: Type,
+    val name: String,
+  ) : FunctionParameter
+
+  val type: Type
+}
+
+sealed interface Type {
+  data class Reference(val typeName: String) : Type
 }
 
 data object Transformer {
@@ -77,9 +90,22 @@ data object Transformer {
   }
 
   private fun generateUmlTargetForFunction(klassDeclaration: KlassDeclaration): UmlTarget.Function? {
-    val name = klassDeclaration.identifier?.identifier ?: return null.withWarn("name is null: ${klassDeclaration.identifier}")
+    val functionName =
+      klassDeclaration.identifier?.identifier ?: return null.withWarn("name is null: ${klassDeclaration.identifier}")
     val annotationNames = klassDeclaration.annotations.mapNotNull { it.identifier.firstOrNull()?.rawName }
-    val params = klassDeclaration.parameter.mapNotNull { it.identifier?.rawName }
+    val params = klassDeclaration.parameter.mapNotNull { decl ->
+      val name = decl.identifier?.rawName ?: return@mapNotNull null
+      val type = decl.asDefaultAstNode()
+        ?.findChild("parameter")
+        ?.findChild("type")
+        ?.let { transformType(it) }
+        ?: return@mapNotNull null
+
+      FunctionParameter.TypeAndName(
+        name = name,
+        type = type,
+      )
+    }
     val returnType = klassDeclaration.type.firstOrNull()?.rawName ?: "Unit"
 
     val modifiers = klassDeclaration.modifiers.map { it.modifier }
@@ -92,13 +118,26 @@ data object Transformer {
     }
 
     return UmlTarget.Function(
-      name = name,
+      name = functionName,
       annotationNames = annotationNames,
       params = params,
       returnType = returnType,
       visibility = visibility,
     )
   }
+
+  private fun transformType(typeAst: DefaultAstNode): Type? {
+    // TODO: function type
+    return typeAst
+      .findChild("typeReference")
+      ?.findChild("userType")
+      ?.findChild("simpleUserType")
+      ?.findChild("simpleIdentifier")
+      ?.findTerminal("Identifier")
+      ?.let { Type.Reference(it.text) }
+  }
+
+  private fun KlassDeclaration.asDefaultAstNode(): DefaultAstNode? = rawAstOrNull()?.ast as? DefaultAstNode
 
   suspend fun genUml(code: String): String {
     return try {
