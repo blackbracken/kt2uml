@@ -35,7 +35,31 @@ class TransformerTest {
         )
       ),
       returnType = Type.Reference("String"),
-      visibility = Visibility.PROTECTED
+      visibility = Visibility.PROTECTED,
+      isSuspend = false,
+    )
+
+    Assertions.assertEquals(listOf(expected), actual)
+  }
+
+  @Test
+  fun testFunction_suspend() = runBlocking {
+    val actual = """
+      suspend fun f(x: Int): String {}
+    """.transformCode()
+
+    val expected = UmlTarget.Function(
+      name = "f",
+      annotationNames = listOf(),
+      params = listOf(
+        FunctionParameter.TypeAndName(
+          type = Type.Reference(typeName = "Int"),
+          name = "x",
+        )
+      ),
+      returnType = Type.Reference("String"),
+      visibility = Visibility.UNSPECIFIED,
+      isSuspend = true,
     )
 
     Assertions.assertEquals(listOf(expected), actual)
@@ -68,6 +92,7 @@ class TransformerTest {
       ),
       returnType = Type.UNIT,
       visibility = Visibility.UNSPECIFIED,
+      isSuspend = false,
     )
 
     Assertions.assertEquals(listOf(expected), actual)

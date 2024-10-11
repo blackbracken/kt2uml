@@ -71,6 +71,7 @@ data object Transformer {
       "public" in modifiers -> Visibility.PUBLIC
       else -> Visibility.UNSPECIFIED
     }
+    val isSuspend = "suspend" in modifiers
 
     return UmlTarget.Function(
       name = functionName,
@@ -78,6 +79,7 @@ data object Transformer {
       params = params,
       returnType = returnType,
       visibility = visibility,
+      isSuspend = isSuspend,
     )
   }
 

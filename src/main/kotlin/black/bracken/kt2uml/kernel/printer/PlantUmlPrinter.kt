@@ -14,6 +14,12 @@ data object PlantUmlPrinter : UmlPrinter {
       ""
     }
 
+    val suspendText = if (target.isSuspend) {
+      " <<suspend>>"
+    } else {
+      ""
+    }
+
     val visibilitySymbol = when (target.visibility) {
       Visibility.PRIVATE -> "-"
       Visibility.PROTECTED -> "#"
@@ -28,7 +34,7 @@ data object PlantUmlPrinter : UmlPrinter {
       typeToString(
         target.returnType
       )
-    }
+    }${suspendText}
     }
     """.trimIndent()
   }

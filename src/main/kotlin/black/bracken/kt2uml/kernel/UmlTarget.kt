@@ -8,6 +8,7 @@ sealed interface UmlTarget {
     val params: List<FunctionParameter.TypeAndName>,
     val returnType: Type,
     val visibility: Visibility,
+    val isSuspend: Boolean,
   ) : UmlTarget
 
 }
